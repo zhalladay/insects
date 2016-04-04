@@ -6,7 +6,7 @@
 #
 #       This program is free software.
 
-import insects.ants, insects.bees, sys
+import ants, bees, sys
 from menu import *
 
 def main():
