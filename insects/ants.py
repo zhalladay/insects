@@ -104,6 +104,66 @@ class Ants:
         #run the program
         self.Run()
 
+    #Clears the board back to its starting state
+    def Clear(self):
+        #time starts at 0
+        self.time = 0
+
+        #create a surface to represent our board
+        self.board = pygame.Surface((self.screen_width, self.screen_height))
+
+        #create a variable to keep up with where the ant is
+        self.ant = None
+
+        #create a variable to tell you if the ant is reversed or not
+        self.reverse = False
+
+        #a dictionary to hold information about all the tiles
+        self.tiles = {}
+        
+        #create Truchet Tiles and record if each tile is a Horizontal or a Vertical tile
+        for x in range(self.width_ref):
+            for y in range(self.height_ref):
+                coord = (x, y)
+                if x%2 == y%2:
+                    self.tiles[coord] = ["H"]                       
+                if x%2 != y%2:
+                    self.tiles[coord] = ["V"]
+
+        #add other information about each tile
+        for key in self.tiles:
+            #each tile starts out as a Left tile
+            self.tiles[key].append("L")
+            #each tile has been stepped on 0 times
+            self.tiles[key].append(0)
+            #color starts out white
+            self.tiles[key].append(self.white)
+            #each tile is cold
+            self.tiles[key].append(False)
+            #no tile has an ant in it
+            self.tiles[key].append((False, None))
+            #"reverse steps" or "antisteps"
+            self.tiles[key].append(0)
+            #fill out the board
+            self.Make_Truchet_Tile(key)
+
+            #self.tiles[][0] holds either 'H' or 'V' representing Horizontal and Vertical
+            #self.tiles[][1] holds either 'L' or 'R' representing Left and Right
+            #self.tiles[][2] holds an integer representing the number of times a tile has been stepped on
+            #self.tiles[][3] holds an RGB value representing the color of the tile
+            #self.tiles[][4] holds a boolean value representing if the tile is hot
+            #self.tiles[][5] holds a tuple with a boolean and an integer between 1 and 4
+            #the boolean represents if there's an ant in that tile and the integer represents the location of the ant
+            #with 1 meaning a left facing ant, 2 meaning an upward facing ant, 3 meaning a right facing ant, and 4 meaning a downward facing ant
+            #self.tiles[][6] holds an integer representing the antisteps(the negative of how many times a tiles been stepped on,
+            #or how many times a tile has been stepped on by a reversed ant)
+
+        #create with a new ant in the center
+        self.Make_Ant_Center()
+
+        #update the board to the screen
+        self.Update()
+
     #Update updates self.board then blits it to the screen
     def Update(self):
         for key in self.tiles:
@@ -163,7 +223,7 @@ class Ants:
                 rect_list, state = menu.update(e, state)
              elif state == 1:
                 print('New Ant')
-                self.Make_New_Center_Ant()
+                self.Clear()
                 state = 0
                 break
              elif state == 2:
@@ -883,7 +943,6 @@ class Ants:
     #Rule_String takes in an integer and converts it into a string or L's and R's
     def Rule_String(self, num):
         time = self.time
-        self.Set_Time(0)
         #converts the number into binary and then into a string of 1's and 0's
         binnum = str(bin(num)[2:])
         #self.rule holds the string of L's and R's
@@ -896,9 +955,10 @@ class Ants:
             elif letter == '0':
                 #if the letter is a 0 then the rule equivalent is an R
                 self.rule = self.rule + 'R'
-        self.Set_Time(time)
         #Update the colors
         self.Set_Colors(len(self.rule))
+        self.Clear()
+        self.Set_Time(time)
 
     #Reverse_Rule is the inverse of the rule and is the rule for reversed ants
     def Reverse_Rule(self):
