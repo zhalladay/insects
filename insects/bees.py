@@ -990,7 +990,7 @@ class Bees:
             self.screen.blit(self.board, (0,0))
             pygame.display.flip()
 
-    #Run runs the ants program and simulates the behavior
+    #Run runs the bees program and simulates the behavior
     def Run(self):
         while True:
             #wait for user command from the user
