@@ -10,7 +10,7 @@
 #       This program is free software.
 
 
-import pygame, math, sys, eztext
+import pygame, math, sys, eztext, sets
 from menu import *
 
 
@@ -101,6 +101,8 @@ class Bees:
             #self.tiles[][5] holds a tuple with a boolean and an integer between 1 and 4
             #the boolean represents if there's an bee in that tile and the integer represents the location of the bee
 
+        self.symmetry = True
+        
         #create with a new bee in the center
         self.Make_Bee_Center()
 
@@ -164,6 +166,8 @@ class Bees:
             #self.tiles[][5] holds a tuple with a boolean and an integer between 1 and 4
             #the boolean represents if there's an bee in that tile and the integer represents the location of the bee
 
+        self.symmetry = True
+        
         #create with a new bee in the center
         self.Make_Bee_Center()
 
@@ -823,43 +827,88 @@ class Bees:
     def Bee_Path(self):
         self.false_tiles = self.tiles
         self.false_bee = self.bee
-        while True:
-            self.False_Move()
+        visited_and_changed = sets.Set([])
+        while self.symmetry:
             coord = (- 35 + 35*self.false_bee[0][0], -40 + 20*self.false_bee[0][1])
-            if(self.false_bee[1] %2 == 1):
-                points = [(coord[0] + 35, coord[1]), (coord[0], coord[1] +20), (coord[0] + 35, coord[1] + 40)]
-                if self.false_bee[1] == 1:
-                    if self.false_tiles[self.false_bee[0]][1] == 'L':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), math.pi/2, 5*math.pi/6, 3)
-                    elif self.false_tiles[self.false_bee[0]][1] == 'R':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 7*math.pi/6, 3*math.pi/2, 3)
-                elif self.false_bee[1] == 3:
-                    if self.false_tiles[self.false_bee[0]][1] == 'L':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 7*math.pi/6, 3*math.pi/2, 3)
-                    elif self.false_tiles[self.false_bee[0]][1] == 'R':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), -math.pi/6, math.pi/6, 3)
-                elif self.false_bee[1] == 5:
-                    if self.false_tiles[self.false_bee[0]][1] == 'L':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), -math.pi/6, math.pi/6, 3)
-                    elif self.false_tiles[self.false_bee[0]][1] == 'R':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), math.pi/2, 5*math.pi/6, 3)
-            elif(self.false_bee[1] %2 == 0):
-                points = [(coord), (coord[0], coord[1] + 40), (coord[0]+35, coord[1]+20)]
-                if self.false_bee[1] == 2:
-                    if self.false_tiles[self.false_bee[0]][1] == 'L':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), 5*math.pi/6, 7*math.pi/6, 3)
-                    elif self.false_tiles[self.false_bee[0]][1] == 'R':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 3*math.pi/2, 11*math.pi/6, 3)
-                elif self.false_bee[1] == 4:
-                    if self.false_tiles[self.false_bee[0]][1] == 'L':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 3*math.pi/2, 11*math.pi/6, 3)
-                    elif self.false_tiles[self.false_bee[0]][1] == 'R':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), math.pi/6, math.pi/2, 3)
-                elif self.false_bee[1] == 6:
-                    if self.false_tiles[self.false_bee[0]][1] == 'L':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), math.pi/6, math.pi/2, 3)
-                    elif self.false_tiles[self.false_bee[0]][1] == 'R':
-                        pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), 5*math.pi/6, 7*math.pi/6, 3)
+            #if the path hasn't changed
+            if(self.false_bee[0] not in visited_and_changed):
+                if(self.false_bee[1] %2 == 1):
+                    points = [(coord[0] + 35, coord[1]), (coord[0], coord[1] +20), (coord[0] + 35, coord[1] + 40)]
+                    if self.false_bee[1] == 1:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), math.pi/2, 5*math.pi/6, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 7*math.pi/6, 3*math.pi/2, 3)
+                    elif self.false_bee[1] == 3:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 7*math.pi/6, 3*math.pi/2, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), -math.pi/6, math.pi/6, 3)
+                    elif self.false_bee[1] == 5:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), -math.pi/6, math.pi/6, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), math.pi/2, 5*math.pi/6, 3)
+                elif(self.false_bee[1] %2 == 0):
+                    points = [(coord), (coord[0], coord[1] + 40), (coord[0]+35, coord[1]+20)]
+                    if self.false_bee[1] == 2:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), 5*math.pi/6, 7*math.pi/6, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 3*math.pi/2, 11*math.pi/6, 3)
+                    elif self.false_bee[1] == 4:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 3*math.pi/2, 11*math.pi/6, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), math.pi/6, math.pi/2, 3)
+                    elif self.false_bee[1] == 6:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), math.pi/6, math.pi/2, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (0,200,0), pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), 5*math.pi/6, 7*math.pi/6, 3)
+            #if the path has changed
+            if(self.false_bee[0] in visited_and_changed):
+                if(self.false_bee[1] %2 == 1):
+                    points = [(coord[0] + 35, coord[1]), (coord[0], coord[1] +20), (coord[0] + 35, coord[1] + 40)]
+                    if self.false_bee[1] == 1:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), math.pi/2, 5*math.pi/6, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 7*math.pi/6, 3*math.pi/2, 3)
+                    elif self.false_bee[1] == 3:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 7*math.pi/6, 3*math.pi/2, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), -math.pi/6, math.pi/6, 3)
+                    elif self.false_bee[1] == 5:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), -math.pi/6, math.pi/6, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), math.pi/2, 5*math.pi/6, 3)
+                elif(self.false_bee[1] %2 == 0):
+                    points = [(coord), (coord[0], coord[1] + 40), (coord[0]+35, coord[1]+20)]
+                    if self.false_bee[1] == 2:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), 5*math.pi/6, 7*math.pi/6, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 3*math.pi/2, 11*math.pi/6, 3)
+                    elif self.false_bee[1] == 4:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 3*math.pi/2, 11*math.pi/6, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), math.pi/6, math.pi/2, 3)
+                    elif self.false_bee[1] == 6:
+                        if self.false_tiles[self.false_bee[0]][1] == 'L':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), math.pi/6, math.pi/2, 3)
+                        elif self.false_tiles[self.false_bee[0]][1] == 'R':
+                            pygame.draw.arc(self.board, (200,0,0), pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), 5*math.pi/6, 7*math.pi/6, 3)
+                self.symmetry = False
+                self.screen.blit(self.board, (0,0))
+                pygame.display.flip()
+            #if the tile was hot and changed we want to store it
+            if self.false_tiles[self.false_bee[0]][4]:
+                visited_and_changed.add(self.false_bee[0])
+            self.False_Move()
             if self.false_bee == self.origin:
                 self.screen.blit(self.board, (0,0))
                 pygame.display.flip()
