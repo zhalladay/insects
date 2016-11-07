@@ -15,27 +15,16 @@ from menu import *
 
 
 class Bees:
-    def __init__(self, screen):
+    def __init__(self, screen, scale):
+        self.screen = screen
         #initialize pygame
         pygame.init()
 
         #time starts at 0
         self.time = 0
-       
-        #set the display screen
-        self.scale = 2
-        self.screen_width=screen.get_width()
-        self.width_ref = int(self.screen_width / 35) + 1
-        self.screen_height=screen.get_height()
-        self.height_ref = int(self.screen_height / 20) + 2
-        self.screen=screen
 
-        self.font = pygame.font.Font(None, 20)
-        self.L = self.font.render('L', 1, (0,0,0))
-        self.R = self.font.render('R', 1, (0,0,0))
-
-        #set the font
-        self.font = pygame.font.Font(None, 96)
+        self.scale = scale # kludge, so that SetAppearance knows this is the initial call
+        self.SetAppearance(screen, scale)
         
         #block mouse motion to save resources
         pygame.event.set_blocked(pygame.MOUSEMOTION)
@@ -68,8 +57,10 @@ class Bees:
         self.Set_Rule_Input()
         
         #create Truchet Tiles and record if each tile is a right facing or left facing triangle
-        for x in range(self.width_ref):
-            for y in range(self.height_ref):
+        self.width_adj = max(0, 2-self.scale) # width_ref one too small when scale = 1
+        for x in range(self.width_ref + self.width_adj):
+            self.height_adj = max(0, 2-self.scale) # height_ref one too small when scale = 1
+            for y in range(self.height_ref + self.height_adj):
                 coord = (x, y)
                 if x%2 == y%2:
                     self.tiles[coord] = ["Right"]                       
@@ -90,6 +81,8 @@ class Bees:
             self.tiles[key].append((False, None))
             #"reverse steps" or "antisteps"
             self.tiles[key].append(0)
+            #arc_colors
+            self.tiles[key].append((self.black,self.black,self.black))
             #fill out the board
             self.Make_Triangle_Tile(key)
 
@@ -112,6 +105,42 @@ class Bees:
         #run the program
         self.Run()
 
+    # Set member attributes that control appearance
+    def SetAppearance(self, screen, scale):
+
+        ##!! doesn't work!! rescale the display passed in from insects
+        if self.scale != scale:
+            width = screen.get_width()
+            height = screen.get_height()
+            pygame.display.quit()
+            pygame.display.init()
+            self.screen=pygame.display.set_mode((width*scale/self.scale,
+                                            height*scale/self.scale),
+                                           pygame.RESIZABLE)
+
+            #update the board to the screen
+            self.Update()
+
+            self.scale = scale
+            
+        #set the display screen
+        self.screen_width=self.screen.get_width()
+        self.width_ref = int(self.screen_width / 35) + 1
+        self.screen_height=self.screen.get_height()
+        self.height_ref = int(self.screen_height / 20) + min(2, scale)
+
+        self.font = pygame.font.Font(None, 20)
+        self.L = self.font.render('L', 1, (0,0,0))
+        self.R = self.font.render('R', 1, (0,0,0))
+
+        # for screen prompts
+        self.screen_prompt_xpos = self.scale * 500
+        self.screen_prompt_ypos = self.scale * 200
+        
+        #set the font
+        self.fontsize = 48*self.scale
+        self.font = pygame.font.Font(None, self.fontsize)
+
     #Clear puts the board back into its starting state
     def Clear(self):
         #time starts at 0
@@ -133,8 +162,10 @@ class Bees:
         self.false_bee = None
         
         #create Truchet Tiles and record if each tile is a right facing or left facing triangle
-        for x in range(self.width_ref):
-            for y in range(self.height_ref):
+        self.width_adj = max(0, 2-self.scale) # width_ref one too small when scale = 1
+        for x in range(self.width_ref + self.width_adj):
+            self.height_adj = max(0, 2-self.scale) # height_ref one too small when scale = 1
+            for y in range(self.height_ref + self.height_adj):
                 coord = (x, y)
                 if x%2 == y%2:
                     self.tiles[coord] = ["Right"]                       
@@ -155,6 +186,8 @@ class Bees:
             self.tiles[key].append((False, None))
             #"reverse steps" or "antisteps"
             self.tiles[key].append(0)
+            #arc_colors
+            self.tiles[key].append((self.black,self.black,self.black))
             #fill out the board
             self.Make_Triangle_Tile(key)
 
@@ -176,6 +209,7 @@ class Bees:
 
     #Update updates self.board then blits it to the screen
     def Update(self):
+        self.Arc_Color_Origin()
         for key in self.tiles:
             if (key[0] >= 0 and key[0] <= self.width_ref - 1) and (key[1] >= 0 and key[1] <= self.height_ref - 1):
                 self.Make_Triangle_Tile(key)
@@ -185,9 +219,9 @@ class Bees:
                 self.Rule(key)
         if (self.bee[0][0] >= 0 and self.bee[0][0] <= self.width_ref - 1) and (self.bee[0][1] >= 0 and self.bee[0][1] <= self.height_ref - 1):
             self.Draw_Bee()
-        self.Bee_Path()
+        #self.Bee_Path()
         self.screen.blit(self.board, (0,0))
-        pygame.display.flip
+        pygame.display.flip()
 
     #For my Menu function I used the Simple_Example file that came with the menu.py as a template for my menu and modified it as needed
     def Main_Menu(self):
@@ -197,11 +231,12 @@ class Bees:
             ('Set Rule',  2, None),
             ('Set Time',    3, None),
             ('Reverse',       4, None),
+            ('Scale', 8, None), ##!! doesn't work!!
             ('Controls', 5, None),
             ('Back', 6, None),
             ('Exit', 7, None)])
 
-        menu.set_font(pygame.font.Font(None, 96))
+        menu.set_font(pygame.font.Font(None, self.fontsize))
 
         # Center the menu on the draw_surface (the entire screen here)
         menu.set_center(True, True)
@@ -251,6 +286,10 @@ class Bees:
                 print('Reverse')
                 self.Reverse_Bee()
                 break
+             elif state == 8: ##!! doesn't work!!
+                print('Scale =')
+                self.SetAppearance_Input()
+                break
              elif state == 5:
                 self.Control_Screen()
                 break
@@ -272,7 +311,7 @@ class Bees:
     #Control_Screen shows the user what commands do what
     def Control_Screen(self):
         self.screen.fill(self.black)
-        self.font = pygame.font.Font(None, 96)
+        self.font = pygame.font.Font(None, self.fontsize)
         line1 = self.font.render('Space - Step', 1, self.white)
         line2 = self.font.render('t - Set Time', 1, self.white)
         line3 = self.font.render('r - Reverse', 1, self.white)
@@ -282,15 +321,17 @@ class Bees:
         line7 = self.font.render('c - Controls', 1, self.white)
         line8 = self.font.render('esc - Menu', 1, self.white)
         line9 = self.font.render('enter - Next', 1, self.white)
-        self.screen.blit(line1, (1000,400))
-        self.screen.blit(line2, (1000,480))
-        self.screen.blit(line3, (1000,560))
-        self.screen.blit(line4, (1000,640))
-        self.screen.blit(line5, (1000,720))
-        self.screen.blit(line6, (1000,800))
-        self.screen.blit(line7, (1000,880))
-        self.screen.blit(line8, (1000,960))
-        self.screen.blit(line9, (1000,1040))
+        xpos = self.screen_prompt_xpos
+        ypos = self.screen_prompt_ypos
+        self.screen.blit(line1, (xpos,ypos))
+        self.screen.blit(line2, (xpos,ypos+self.fontsize))
+        self.screen.blit(line3, (xpos,ypos+2*self.fontsize))
+        self.screen.blit(line4, (xpos,ypos+3*self.fontsize))
+        self.screen.blit(line5, (xpos,ypos+4*self.fontsize))
+        self.screen.blit(line6, (xpos,ypos+5*self.fontsize))
+        self.screen.blit(line7, (xpos,ypos+6*self.fontsize))
+        self.screen.blit(line8, (xpos,ypos+7*self.fontsize))
+        self.screen.blit(line9, (xpos,ypos+8*self.fontsize))
         pygame.display.flip()
         while 1:
             e = pygame.event.wait()
@@ -301,12 +342,50 @@ class Bees:
                 pygame.quit()
                 sys.exit()
 
+    ##!! doesn't work!! SetAppearance_Input lets the user rescale the lattice surface
+    def SetAppearance_Input(self):
+        self.screen.fill(self.black)
+        textbox = eztext.Input(maxlength=45, color=(self.white), prompt='Scale: ')
+        textbox.font = pygame.font.Font(None, self.fontsize)
+        textbox.set_pos(self.screen_prompt_xpos, self.screen_prompt_ypos*1.5)
+        # create the pygame clock
+        clock = pygame.time.Clock()
+
+        while 1:
+            # make sure the program is running at 30 fps
+            clock.tick(30)
+
+            # events for textbox
+            events = pygame.event.get()
+            # process other events
+            for event in events:
+                # close if x button is pressed
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        print(int(textbox.value))
+                        self.SetAppearance(self.screen, int(textbox.value))
+                        if len(self.tiles) > 0:
+                            self.Update()
+                        return
+            # clear the screen
+            self.screen.fill(self.black)
+            # update textbox
+            textbox.update(events)
+            # blit textbox on the sceen
+            textbox.draw(self.screen)
+            # refresh the display
+            pygame.display.flip()
+
+            
     #Set_Rule_Input lets the user set the rule string
     def Set_Rule_Input(self):
         self.screen.fill(self.black)
         textbox = eztext.Input(maxlength=45, color=(self.white), prompt='Bee Number: ')
-        textbox.font = pygame.font.Font(None, 96)
-        textbox.set_pos(1000, 600)
+        textbox.font = pygame.font.Font(None, self.fontsize)
+        textbox.set_pos(self.screen_prompt_xpos, self.screen_prompt_ypos*1.5)
         # create the pygame clock
         clock = pygame.time.Clock()
 
@@ -343,8 +422,8 @@ class Bees:
     def Set_Time_Input(self):
         self.screen.fill(self.black)
         textbox = eztext.Input(maxlength=45, color=(self.white), prompt='Time: ')
-        textbox.font = pygame.font.Font(None, 96)
-        textbox.set_pos(1000, 600)
+        textbox.font = pygame.font.Font(None, self.fontsize)
+        textbox.set_pos(self.screen_prompt_xpos, self.screen_prompt_ypos*1.5)
         # create the pygame clock
         clock = pygame.time.Clock()
 
@@ -375,10 +454,43 @@ class Bees:
             textbox.draw(self.screen)
             # refresh the display
             pygame.display.flip()
-            
+
+    #starting at the upper right corner assigns colors to all the arcs
+    def Arc_Color_Origin(self):
+        self.Arc_Color((0,0), (self.width_ref + self.width_adj, self.height_ref + self.height_adj))
+    
+    def Arc_Color(self, (x,y), (a,b)):
+        for i in range(x,a):
+            if self.tiles[(i,y)][0] == "Left":
+                self.tiles[(i,y)][7] = (self.blue, self.red, self.green)
+            else:
+                self.tiles[(i,y)][7] = (self.red, self.blue, self.green)
+            for j in range(y+1,b):
+                if self.tiles[(i,j)][0] == "Left":
+                    if self.tiles[(i,j)][1] == "L":
+                        if self.tiles[(i,j-1)][1] == "L":
+                            self.tiles[(i,j)][7] = (self.tiles[(i,j-1)][7][2],self.tiles[(i,j-1)][7][1],self.tiles[(i,j-1)][7][0])
+                        else:
+                            self.tiles[(i,j)][7] = (self.tiles[(i,j-1)][7][2],self.tiles[(i,j-1)][7][0],self.tiles[(i,j-1)][7][1])
+                    else:
+                        if self.tiles[(i,j-1)][1] == "L":
+                            self.tiles[(i,j)][7] = (self.tiles[(i,j-1)][7][2],self.tiles[(i,j-1)][7][0],self.tiles[(i,j-1)][7][1])
+                        else:
+                            self.tiles[(i,j)][7] = (self.tiles[(i,j-1)][7][2],self.tiles[(i,j-1)][7][1],self.tiles[(i,j-1)][7][0])
+                if self.tiles[(i,j)][0] == "Right":
+                    if self.tiles[(i,j)][1] == 'L':
+                        if self.tiles[(i,j-1)][1] == "L":
+                            self.tiles[(i,j)][7] = (self.tiles[(i,j-1)][7][0], self.tiles[(i,j-1)][7][2], self.tiles[(i,j-1)][7][1])
+                        else:
+                            self.tiles[(i,j)][7] = (self.tiles[(i,j-1)][7][1], self.tiles[(i,j-1)][7][2], self.tiles[(i,j-1)][7][0])
+                    else:
+                        if self.tiles[(i,j-1)][1] == "L":
+                            self.tiles[(i,j)][7] = (self.tiles[(i,j-1)][7][1], self.tiles[(i,j-1)][7][2], self.tiles[(i,j-1)][7][0])
+                        else:
+                            self.tiles[(i,j)][7] = (self.tiles[(i,j-1)][7][0], self.tiles[(i,j-1)][7][2], self.tiles[(i,j-1)][7][1])
 
     #Left_Triangle_Tile creates a left facing triangle tile
-    def Left_Triangle_Tile(self, color, coord, turn):
+    def Left_Triangle_Tile(self, color, coord, turn, key):
         #find the points list of the triangle
         points = [(coord[0] + 35, coord[1]), (coord[0], coord[1] +20), (coord[0] + 35, coord[1] + 40)]
         #fill the background the color of the tile
@@ -387,16 +499,16 @@ class Bees:
         pygame.draw.polygon(self.board, self.black, points, 1)
         #mark if the tile is a left turning or right turning tile
         if turn == 'L':
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), math.pi/2, 5*math.pi/6, 2)
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), -math.pi/6, math.pi/6, 2)
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 7*math.pi/6, 3*math.pi/2, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][0], pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), math.pi/2, 5*math.pi/6, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][1], pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), -math.pi/6, math.pi/6, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][2], pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 7*math.pi/6, 3*math.pi/2, 2)
         elif turn == 'R':
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), math.pi/2, 5*math.pi/6, 2)
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), -math.pi/6, math.pi/6, 2)
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 7*math.pi/6, 3*math.pi/2, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][0], pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), math.pi/2, 5*math.pi/6, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][1], pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), -math.pi/6, math.pi/6, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][2], pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 7*math.pi/6, 3*math.pi/2, 2)
 
     #Right_Triangle_Tile creates a right facing triangle tile
-    def Right_Triangle_Tile(self, color, coord, turn):
+    def Right_Triangle_Tile(self, color, coord, turn, key):
         #find the points list of the triangle
         points = [(coord), (coord[0], coord[1] + 40), (coord[0]+35, coord[1]+20)]
         #fille the background the color of the tile
@@ -405,13 +517,13 @@ class Bees:
         pygame.draw.polygon(self.board, self.black, points, 1)
         #mark if the tile is a left turning or right turning tile
         if turn == 'L':
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), 5*math.pi/6, 7*math.pi/6, 2)
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), math.pi/6, math.pi/2, 2)
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 3*math.pi/2, 11*math.pi/6, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][0], pygame.Rect((points[2][0]-11, points[2][1]-11), (22,22)), 5*math.pi/6, 7*math.pi/6, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][1], pygame.Rect((points[1][0]-11, points[1][1]-11), (22,22)), math.pi/6, math.pi/2, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][2], pygame.Rect((points[0][0]-11, points[0][1]-11), (22,22)), 3*math.pi/2, 11*math.pi/6, 2)
         elif turn == 'R':
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), 5*math.pi/6, 7*math.pi/6, 2)
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), math.pi/6, math.pi/2, 2)
-            pygame.draw.arc(self.board, self.black, pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 3*math.pi/2, 11*math.pi/6, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][0], pygame.Rect((points[2][0]-30, points[2][1]-30), (60,60)), 5*math.pi/6, 7*math.pi/6, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][1], pygame.Rect((points[1][0]-30, points[1][1]-30), (60,60)), math.pi/6, math.pi/2, 2)
+            pygame.draw.arc(self.board, self.tiles[key][7][2], pygame.Rect((points[0][0]-30, points[0][1]-30), (60,60)), 3*math.pi/2, 11*math.pi/6, 2)
             
     #Make_Triangle_Tile makes a triangle tile at the given coordinates
     def Make_Triangle_Tile(self,(x,y)):
@@ -426,10 +538,10 @@ class Bees:
         self.Rule((x,y))
         #checks if the tile is a right facing tile
         if self.tiles[(x,y)][0] == 'Right':
-                self.Right_Triangle_Tile(color, loc, str(self.tiles[(x,y)][1]))
+                self.Right_Triangle_Tile(color, loc, str(self.tiles[(x,y)][1]), (x,y))
         #if it's not then it's a left facing tile tile
         if self.tiles[(x,y)][0] == 'Left':
-                self.Left_Triangle_Tile(color, loc, str(self.tiles[(x,y)][1]))
+                self.Left_Triangle_Tile(color, loc, str(self.tiles[(x,y)][1]), (x,y))
         
     #Draw_Bee_1 draws a bee at position 1 on the tile given
     def Draw_Bee_1(self, (col, row)):
@@ -745,6 +857,9 @@ class Bees:
     def Set_Colors(self, num):
         #there will always be black and white
         self.black = (0,0,0)
+        self.red = (255,0,0)
+        self.green = (0,255,0)
+        self.blue = (0,0,255)
         if num >= 1:
             self.white = (255,255,255)
             num -= 1
@@ -1069,7 +1184,7 @@ class Bees:
                 if press[99] == 0:
                     self.Control_Screen()
             if self.bee == self.origin:
-                self.Bee_Path()
+                self.Update()
             #update the screen
             self.screen.blit(self.board, (0,0))
             pygame.display.flip()

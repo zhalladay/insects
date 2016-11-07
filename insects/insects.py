@@ -6,21 +6,32 @@
 #
 #       This program is free software.
 
-import ants, bees, sys
+import ants, bees, sys, argparse
 from menu import *
 
 def main():
+    # parse arguments
+    parser = argparse.ArgumentParser(description='Simulate an ant or bee.')
+    parser.add_argument('-s','--scale', dest='scale', default=2, type=int,
+                                        help='scale (default: 2)')
+    args = parser.parse_args()
+    
     #initialize pygame
     pygame.init()
    
     #set the display screen
-    scale = 2
-    screen_width=1280 * scale
-    screen_height=800 * scale
+    scale = args.scale
+    screen_width=1280*scale
+    screen_height=800*scale
     screen=pygame.display.set_mode((screen_width,screen_height), pygame.RESIZABLE)
 
+    # for screen prompts
+    screen_prompt_xpos = scale * 500
+    screen_prompt_ypos = scale * 200
+        
     #set the font
-    font = pygame.font.Font(None, 96)
+    fontsize = 48*scale
+    font = pygame.font.Font(None, fontsize)
     
     #block mouse motion to save resources
     pygame.event.set_blocked(pygame.MOUSEMOTION)
@@ -30,7 +41,7 @@ def main():
        [('Ants', 1, None),
         ('Bees',  2, None)])
 
-    menu.set_font(pygame.font.Font(None, 96))
+    menu.set_font(pygame.font.Font(None, fontsize))
 
     # Center the menu on the draw_surface (the entire screen here)
     menu.set_center(True, True)
@@ -62,15 +73,15 @@ def main():
          if state == 0:
             rect_list, state = menu.update(e, state)
          elif state == 1:
-            ant = ants.Ants(screen)
+            ant = ants.Ants(screen, scale)
             state = 0
             break
          elif state == 2:
-            bee = bees.Bees(screen)
+            bee = bees.Bees(screen, scale)
             state = 0
             break
          else:
-            print 'Exit!'
+            print ('Exit!')
             pygame.quit()
             sys.exit()
 
