@@ -13,23 +13,14 @@ from menu import *
 
 
 class Ants:
-    def __init__(self, screen):
+    def __init__(self, screen, scale):
         #time starts at 0
         self.time = 0
         
         #initialize pygame
         pygame.init()
        
-        #set the display screen
-        self.scale = 2
-        self.screen_width=screen.get_width()
-        self.width_ref = int(self.screen_width / 40)
-        self.screen_height=screen.get_height()
-        self.height_ref = int(self.screen_height / 40)
-        self.screen=screen
-
-        #set the font
-        self.font = pygame.font.Font(None, 96)
+        self.SetAppearance(screen, scale)
         
         #block mouse motion to save resources
         pygame.event.set_blocked(pygame.MOUSEMOTION)
@@ -103,6 +94,25 @@ class Ants:
 
         #run the program
         self.Run()
+
+    # Set member attributes that control appearance
+    def SetAppearance(self, screen, scale):
+    
+        #set the display screen
+        self.scale = scale
+        self.screen_width=screen.get_width()
+        self.width_ref = int(self.screen_width / 40)
+        self.screen_height=screen.get_height()
+        self.height_ref = int(self.screen_height / 40)
+        self.screen=screen
+
+        # for screen prompts
+        self.screen_prompt_xpos = self.scale * 500
+        self.screen_prompt_ypos = self.scale * 200
+        
+        #set the font
+        self.fontsize = 48*self.scale
+        self.font = pygame.font.Font(None, self.fontsize)
 
     #Clears the board back to its starting state
     def Clear(self):
@@ -190,7 +200,7 @@ class Ants:
             ('Back', 6, None),
             ('Exit', 7, None)])
 
-        menu.set_font(pygame.font.Font(None, 96))
+        menu.set_font(pygame.font.Font(None, self.fontsize))
 
         # Center the menu on the draw_surface (the entire screen here)
         menu.set_center(True, True)
@@ -270,15 +280,17 @@ class Ants:
         line7 = self.font.render('c - Controls', 1, self.white)
         line8 = self.font.render('esc - Menu', 1, self.white)
         line9 = self.font.render('enter - Next', 1, self.white)
-        self.screen.blit(line1, (1000,400))
-        self.screen.blit(line2, (1000,480))
-        self.screen.blit(line3, (1000,560))
-        self.screen.blit(line4, (1000,640))
-        self.screen.blit(line5, (1000,720))
-        self.screen.blit(line6, (1000,800))
-        self.screen.blit(line7, (1000,880))
-        self.screen.blit(line8, (1000,960))
-        self.screen.blit(line9, (1000,1040))
+        xpos = self.screen_prompt_xpos
+        ypos = self.screen_prompt_ypos
+        self.screen.blit(line1, (xpos,ypos))
+        self.screen.blit(line2, (xpos,ypos+self.fontsize))
+        self.screen.blit(line3, (xpos,ypos+2*self.fontsize))
+        self.screen.blit(line4, (xpos,ypos+3*self.fontsize))
+        self.screen.blit(line5, (xpos,ypos+4*self.fontsize))
+        self.screen.blit(line6, (xpos,ypos+5*self.fontsize))
+        self.screen.blit(line7, (xpos,ypos+6*self.fontsize))
+        self.screen.blit(line8, (xpos,ypos+7*self.fontsize))
+        self.screen.blit(line9, (xpos,ypos+8*self.fontsize))
         pygame.display.flip()
         while 1:
             e = pygame.event.wait()
@@ -293,8 +305,8 @@ class Ants:
     def Set_Rule_Input(self):
         self.screen.fill(self.black)
         textbox = eztext.Input(maxlength=45, color=(self.white), prompt='Ant Number: ')
-        textbox.font = pygame.font.Font(None, 96)
-        textbox.set_pos(1000, 600)
+        textbox.font = pygame.font.Font(None, self.fontsize)
+        textbox.set_pos(self.screen_prompt_xpos, self.screen_prompt_ypos*1.5)
         # create the pygame clock
         clock = pygame.time.Clock()
 
@@ -331,8 +343,8 @@ class Ants:
     def Set_Time_Input(self):
         self.screen.fill(self.black)
         textbox = eztext.Input(maxlength=45, color=(self.white), prompt='Time: ')
-        textbox.font = pygame.font.Font(None, 96)
-        textbox.set_pos(1000, 600)
+        textbox.font = pygame.font.Font(None, self.fontsize)
+        textbox.set_pos(self.screen_prompt_xpos, self.screen_prompt_ypos*1.5)
         # create the pygame clock
         clock = pygame.time.Clock()
 
