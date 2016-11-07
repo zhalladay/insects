@@ -1055,7 +1055,8 @@ class Bees:
                     x = 1
                     break
             if self.bee == self.origin:
-                self.Bee_Path()
+                #self.Bee_Path()
+                self.Update()
             self.screen.blit(self.board, (0,0))
             pygame.display.flip()
 
